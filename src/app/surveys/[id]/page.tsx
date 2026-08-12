@@ -29,6 +29,12 @@ export default async function SurveyPage({
     .get();
   if (!survey) notFound();
   if (!survey.active) {
+    const live = db
+      .select()
+      .from(surveys)
+      .all()
+      .find((s) => s.active && s.type === survey.type);
+    if (live) redirect(`/surveys/${live.id}`);
     return (
       <AppShell user={session}>
         <div className="panel p-5">

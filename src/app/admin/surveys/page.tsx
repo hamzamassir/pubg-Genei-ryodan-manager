@@ -8,8 +8,8 @@ import { surveys, surveyResponses } from "@/db/schema";
 import {
   createAdminSurveyAction,
   createRoleAssessmentAction,
-  deactivateSurveyAction,
 } from "@/app/actions";
+import { ConfirmCloseSurvey } from "@/components/ConfirmCloseSurvey";
 
 export default async function AdminSurveysPage({
   searchParams,
@@ -95,7 +95,9 @@ export default async function AdminSurveysPage({
               return (
                 <li
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3 last:border-0"
+                  className={`flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3 last:border-0 ${
+                    s.active ? "bg-[rgba(168,85,247,0.08)]" : ""
+                  }`}
                 >
                   <div className="min-w-0">
                     <Link
@@ -103,6 +105,7 @@ export default async function AdminSurveysPage({
                       className="text-base font-semibold hover:text-[var(--venom)]"
                     >
                       {s.title}
+                      {s.active ? " · LIVE" : ""}
                     </Link>
                     <div className="text-sm text-[var(--text-muted)]">
                       {s.type} · {responses} responses · {s.active ? "active" : "closed"}
@@ -112,14 +115,7 @@ export default async function AdminSurveysPage({
                     <Link href={`/admin/surveys/${s.id}`} className="btn btn-ghost text-sm">
                       Results
                     </Link>
-                    {s.active && (
-                      <form action={deactivateSurveyAction}>
-                        <input type="hidden" name="surveyId" value={s.id} />
-                        <button type="submit" className="btn btn-ghost text-sm">
-                          Close
-                        </button>
-                      </form>
-                    )}
+                    {s.active && <ConfirmCloseSurvey surveyId={s.id} />}
                   </div>
                 </li>
               );

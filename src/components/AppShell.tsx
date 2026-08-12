@@ -3,6 +3,7 @@ import Image from "next/image";
 import { logoutAction } from "@/app/actions";
 import type { SessionUser } from "@/lib/auth";
 import { DesktopNav, MobileNav } from "@/components/NavLinks";
+import { ActiveSurveyBanner } from "@/components/ActiveSurveyBanner";
 
 const links = [
   { href: "/home", label: "Home", roles: ["player", "manager"] },
@@ -67,11 +68,23 @@ export function AppShell({
         </div>
       </header>
 
+      <ActiveSurveyBanner role={user.role} />
+
       <main className="mx-auto w-full max-w-3xl flex-1 px-3 py-5 pb-24 sm:max-w-6xl sm:px-4 sm:py-6 sm:pb-8">
         {children}
       </main>
 
-      <MobileNav items={nav.slice(0, user.role === "admin" ? 5 : 4)} />
+      <MobileNav
+        items={
+          user.role === "admin"
+            ? nav.filter((l) =>
+                ["/admin", "/admin/match-days", "/admin/users", "/admin/surveys", "/roster"].includes(
+                  l.href,
+                ),
+              )
+            : nav.slice(0, 4)
+        }
+      />
     </div>
   );
 }

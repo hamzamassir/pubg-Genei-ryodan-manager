@@ -12,7 +12,7 @@ import {
   interpretBand,
   type RoleCode,
 } from "@/lib/role-assessment";
-import { deactivateSurveyAction } from "@/app/actions";
+import { ConfirmCloseSurvey } from "@/components/ConfirmCloseSurvey";
 
 type ScoresPayload = {
   raw: Record<RoleCode, number>;
@@ -95,14 +95,7 @@ export default async function AdminSurveyDetailPage({
               you close it below. Navigating away does not close it.
             </p>
           </div>
-          {survey.active && (
-            <form action={deactivateSurveyAction}>
-              <input type="hidden" name="surveyId" value={survey.id} />
-              <button type="submit" className="btn btn-danger">
-                Close survey
-              </button>
-            </form>
-          )}
+          {survey.active && <ConfirmCloseSurvey surveyId={survey.id} />}
         </div>
 
         {survey.type === "role_assessment" && (

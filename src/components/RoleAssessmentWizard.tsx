@@ -43,12 +43,19 @@ export function RoleAssessmentWizard({
   const [pending, start] = useTransition();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydrated = useRef(false);
+  const draftRef = useRef({
+    answers: initialDraft?.answers || ({} as Record<string, unknown>),
+    unclear: new Set(initialDraft?.unclearQuestionIds || []),
+    step: initialDraft?.step ?? 0,
+  });
 
   const total = ROLE_QUESTIONS.length;
   const safeStep = Math.min(Math.max(step, 0), total - 1);
   const q = ROLE_QUESTIONS[safeStep] as RoleQuestion;
   const progress = Math.round(((safeStep + 1) / total) * 100);
   const isUnclear = unclear.has(q.id);
+
+  draftRef.current = { answers, unclear, step: safeStep };
 
   const canNext = useMemo(() => {
     if (isUnclear) return true;
@@ -80,10 +87,27 @@ export function RoleAssessmentWizard({
 
   useEffect(() => {
     hydrated.current = true;
+    const flush = () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const d = draftRef.current;
+      void saveRoleAssessmentDraftAction({
+        surveyId,
+        answers: d.answers,
+        unclearQuestionIds: [...d.unclear],
+        step: d.step,
+      });
+    };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onHide);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onHide);
     };
-  }, []);
+  }, [surveyId]);
 
   function setAnswer(value: unknown) {
     setAnswers((prev) => {
