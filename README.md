@@ -1,0 +1,1 @@
+# pubg-Genei-ryodan-manager
