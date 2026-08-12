@@ -40,12 +40,12 @@ export default async function AdminSurveysPage({
         <form action={createRoleAssessmentAction} className="panel space-y-3 p-5">
           <h2 className="section-label">Weekly role assessment</h2>
           <p className="text-base text-[var(--text-muted)]">
-            124-question competitive role questionnaire (IGL / Entry / Fragger / Flanker / Scout /
-            Sniper / Support / Anchor). Mobile: one question → Next. Closes previous open role
-            assessments.
+            124-question role questionnaire. Stays open for <strong>all players</strong> until you
+            tap <strong>Close</strong> — navigating or refreshing admin pages will not close it. If
+            one is already active, Launch opens that same survey (does not create a new one).
           </p>
           <button type="submit" className="btn w-full sm:w-auto">
-            Launch weekly role assessment
+            Launch / open current role assessment
           </button>
         </form>
 

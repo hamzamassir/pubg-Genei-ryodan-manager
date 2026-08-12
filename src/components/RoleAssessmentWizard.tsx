@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { submitRoleAssessmentAction } from "@/app/actions";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  saveRoleAssessmentDraftAction,
+  submitRoleAssessmentAction,
+} from "@/app/actions";
 import {
   ROLE_QUESTIONS,
   type RoleQuestion,
@@ -15,20 +18,40 @@ const SCALE_LABELS: Record<number, string> = {
   5: "Elite",
 };
 
-export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const [unclear, setUnclear] = useState<Set<string>>(() => new Set());
+export type RoleDraft = {
+  answers: Record<string, unknown>;
+  unclearQuestionIds: string[];
+  step: number;
+};
+
+export function RoleAssessmentWizard({
+  surveyId,
+  initialDraft,
+}: {
+  surveyId: number;
+  initialDraft?: RoleDraft | null;
+}) {
+  const [step, setStep] = useState(initialDraft?.step ?? 0);
+  const [answers, setAnswers] = useState<Record<string, unknown>>(
+    () => initialDraft?.answers || {},
+  );
+  const [unclear, setUnclear] = useState<Set<string>>(
+    () => new Set(initialDraft?.unclearQuestionIds || []),
+  );
   const [error, setError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [pending, start] = useTransition();
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hydrated = useRef(false);
 
   const total = ROLE_QUESTIONS.length;
-  const q = ROLE_QUESTIONS[step] as RoleQuestion;
-  const progress = Math.round(((step + 1) / total) * 100);
+  const safeStep = Math.min(Math.max(step, 0), total - 1);
+  const q = ROLE_QUESTIONS[safeStep] as RoleQuestion;
+  const progress = Math.round(((safeStep + 1) / total) * 100);
   const isUnclear = unclear.has(q.id);
 
   const canNext = useMemo(() => {
-    if (isUnclear) return true; // can skip answering if flagged unclear
+    if (isUnclear) return true;
     const v = answers[q.id];
     if (q.kind === "multi") {
       return Array.isArray(v) && v.length > 0;
@@ -39,8 +62,35 @@ export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
     return v !== undefined && v !== null && v !== "";
   }, [answers, q, isUnclear]);
 
+  function persist(nextAnswers: Record<string, unknown>, nextUnclear: Set<string>, nextStep: number) {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaveState("saving");
+    saveTimer.current = setTimeout(() => {
+      void saveRoleAssessmentDraftAction({
+        surveyId,
+        answers: nextAnswers,
+        unclearQuestionIds: [...nextUnclear],
+        step: nextStep,
+      }).then((res) => {
+        if (res?.error) setError(res.error);
+        else setSaveState("saved");
+      });
+    }, 400);
+  }
+
+  useEffect(() => {
+    hydrated.current = true;
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, []);
+
   function setAnswer(value: unknown) {
-    setAnswers((prev) => ({ ...prev, [q.id]: value }));
+    setAnswers((prev) => {
+      const next = { ...prev, [q.id]: value };
+      persist(next, unclear, safeStep);
+      return next;
+    });
     setError(null);
   }
 
@@ -49,9 +99,15 @@ export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
       const next = new Set(prev);
       if (next.has(q.id)) next.delete(q.id);
       else next.add(q.id);
+      persist(answers, next, safeStep);
       return next;
     });
     setError(null);
+  }
+
+  function goTo(nextStep: number) {
+    setStep(nextStep);
+    persist(answers, unclear, nextStep);
   }
 
   function next() {
@@ -59,21 +115,25 @@ export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
       setError("Answer the question, or flag it as unclear");
       return;
     }
-    if (step < total - 1) setStep((s) => s + 1);
-    else {
+    if (safeStep < total - 1) {
+      goTo(safeStep + 1);
+    } else {
       start(async () => {
-        const res = await submitRoleAssessmentAction(
+        // Flush draft once more before final submit
+        await saveRoleAssessmentDraftAction({
           surveyId,
           answers,
-          [...unclear],
-        );
+          unclearQuestionIds: [...unclear],
+          step: safeStep,
+        });
+        const res = await submitRoleAssessmentAction(surveyId, answers, [...unclear]);
         if (res?.error) setError(res.error);
       });
     }
   }
 
   function back() {
-    if (step > 0) setStep((s) => s - 1);
+    if (safeStep > 0) goTo(safeStep - 1);
   }
 
   return (
@@ -81,9 +141,15 @@ export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
       <div>
         <div className="mb-1 flex items-center justify-between gap-2 text-sm text-[var(--text-muted)]">
           <span>
-            Q{step + 1} / {total}
+            Q{safeStep + 1} / {total}
           </span>
-          <span>{progress}%</span>
+          <span>
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "saved"
+                ? "Auto-saved"
+                : `${progress}%`}
+          </span>
         </div>
         <div className="h-2 w-full bg-[rgba(255,255,255,0.06)]">
           <div
@@ -223,9 +289,7 @@ export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
       <button
         type="button"
         onClick={toggleUnclear}
-        className={`btn w-full text-sm ${
-          isUnclear ? "btn-danger" : "btn-ghost"
-        }`}
+        className={`btn w-full text-sm ${isUnclear ? "btn-danger" : "btn-ghost"}`}
       >
         {isUnclear ? "Unclear flagged — tap to undo" : "Flag as unclear"}
       </button>
@@ -237,17 +301,12 @@ export function RoleAssessmentWizard({ surveyId }: { surveyId: number }) {
           type="button"
           className="btn btn-ghost flex-1"
           onClick={back}
-          disabled={step === 0 || pending}
+          disabled={safeStep === 0 || pending}
         >
           Back
         </button>
-        <button
-          type="button"
-          className="btn flex-[2]"
-          onClick={next}
-          disabled={pending}
-        >
-          {pending ? "Saving…" : step === total - 1 ? "Submit" : "Next"}
+        <button type="button" className="btn flex-[2]" onClick={next} disabled={pending}>
+          {pending ? "Submitting…" : safeStep === total - 1 ? "Submit" : "Next"}
         </button>
       </div>
     </div>

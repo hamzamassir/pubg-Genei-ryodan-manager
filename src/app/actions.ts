@@ -15,6 +15,7 @@ import {
   surveyResponses,
   questionFlags,
   magicLinks,
+  surveyDrafts,
   type GameMap,
   type SurveyQuestion,
 } from "@/db/schema";
@@ -360,22 +361,26 @@ export async function createAdminSurveyAction(formData: FormData) {
 
   revalidatePath("/admin/surveys");
   revalidatePath("/");
-  redirect(`/admin/surveys?created=${s.id}`);
+  revalidatePath("/home");
+  // Stay on this survey until admin closes it
+  redirect(`/admin/surveys/${s.id}`);
 }
 
 export async function createRoleAssessmentAction() {
   const admin = await requireAdmin();
   const week = new Date().toISOString().slice(0, 10);
 
-  // Close previous active role assessments
-  const active = db
+  // Never auto-close: reuse the same active survey for all players
+  const existing = db
     .select()
     .from(surveys)
     .where(eq(surveys.type, "role_assessment"))
     .all()
-    .filter((s) => s.active);
-  for (const s of active) {
-    db.update(surveys).set({ active: false }).where(eq(surveys.id, s.id)).run();
+    .find((s) => s.active);
+
+  if (existing) {
+    revalidatePath("/admin/surveys");
+    redirect(`/admin/surveys/${existing.id}`);
   }
 
   const s = db
@@ -384,7 +389,7 @@ export async function createRoleAssessmentAction() {
       type: "role_assessment",
       title: `Weekly Role Assessment · ${week}`,
       description:
-        "Mobile-friendly role questionnaire (124 Q). Rate yourself honestly. Scoring is hidden. Appears on your home until completed.",
+        "Mobile-friendly role questionnaire (124 Q). Rate yourself honestly. Scoring is hidden. Stays open for all players until admin closes it.",
       questionsJson: JSON.stringify({ engine: "role_assessment_v1" }),
       active: true,
       createdBy: admin.id,
@@ -403,8 +408,56 @@ export async function deactivateSurveyAction(formData: FormData) {
   await requireAdmin();
   const id = Number(formData.get("surveyId"));
   db.update(surveys).set({ active: false }).where(eq(surveys.id, id)).run();
+  // Clean drafts for closed survey
+  db.delete(surveyDrafts).where(eq(surveyDrafts.surveyId, id)).run();
   revalidatePath("/admin/surveys");
+  revalidatePath(`/admin/surveys/${id}`);
   revalidatePath("/");
+  revalidatePath("/home");
+}
+
+export async function saveRoleAssessmentDraftAction(input: {
+  surveyId: number;
+  answers: Record<string, unknown>;
+  unclearQuestionIds: string[];
+  step: number;
+}): Promise<{ error?: string; ok?: boolean }> {
+  const user = await requireUser();
+  const survey = db
+    .select()
+    .from(surveys)
+    .where(eq(surveys.id, input.surveyId))
+    .get();
+  if (!survey || !survey.active || survey.type !== "role_assessment") {
+    return { error: "Survey is closed — ask admin to re-open or launch again" };
+  }
+
+  const existing = db
+    .select()
+    .from(surveyDrafts)
+    .where(eq(surveyDrafts.surveyId, input.surveyId))
+    .all()
+    .find((d) => d.userId === user.id);
+
+  const payload = {
+    answersJson: JSON.stringify(input.answers || {}),
+    unclearJson: JSON.stringify(input.unclearQuestionIds || []),
+    step: Math.max(0, Math.min(input.step || 0, 1000)),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (existing) {
+    db.update(surveyDrafts).set(payload).where(eq(surveyDrafts.id, existing.id)).run();
+  } else {
+    db.insert(surveyDrafts)
+      .values({
+        surveyId: input.surveyId,
+        userId: user.id,
+        ...payload,
+      })
+      .run();
+  }
+  return { ok: true };
 }
 
 export async function addUserAction(
@@ -459,8 +512,14 @@ export async function submitRoleAssessmentAction(
 ): Promise<{ error?: string } | void> {
   const user = await requireUser();
   const survey = db.select().from(surveys).where(eq(surveys.id, surveyId)).get();
-  if (!survey || !survey.active || survey.type !== "role_assessment") {
-    return { error: "Survey not available" };
+  if (!survey || survey.type !== "role_assessment") {
+    return { error: "Survey not found" };
+  }
+  if (!survey.active) {
+    return {
+      error:
+        "This survey was closed by admin. Ask them to launch again — your progress may still be in draft if they re-open the same one.",
+    };
   }
 
   const { scoreRoleAssessment } = await import("@/lib/role-assessment");
@@ -523,6 +582,17 @@ export async function submitRoleAssessmentAction(
         createdAt: new Date().toISOString(),
       })
       .run();
+  }
+
+  // Clear auto-save draft after successful submit
+  const draft = db
+    .select()
+    .from(surveyDrafts)
+    .where(eq(surveyDrafts.surveyId, surveyId))
+    .all()
+    .find((d) => d.userId === user.id);
+  if (draft) {
+    db.delete(surveyDrafts).where(eq(surveyDrafts.id, draft.id)).run();
   }
 
   revalidatePath("/");

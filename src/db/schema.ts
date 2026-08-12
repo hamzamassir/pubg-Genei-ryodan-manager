@@ -145,6 +145,27 @@ export const magicLinks = sqliteTable("magic_links", {
     .$defaultFn(() => new Date().toISOString()),
 });
 
+/** In-progress survey answers (auto-save) — survives refresh */
+export const surveyDrafts = sqliteTable(
+  "survey_drafts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    surveyId: integer("survey_id")
+      .notNull()
+      .references(() => surveys.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    answersJson: text("answers_json").notNull().default("{}"),
+    unclearJson: text("unclear_json").notNull().default("[]"),
+    step: integer("step").notNull().default(0),
+    updatedAt: text("updated_at")
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()),
+  },
+  (t) => [uniqueIndex("survey_draft_unique").on(t.surveyId, t.userId)],
+);
+
 export type User = typeof users.$inferSelect;
 export type MatchDay = typeof matchDays.$inferSelect;
 export type Game = typeof games.$inferSelect;

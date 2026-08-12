@@ -185,6 +185,18 @@ function migrate() {
       used_at TEXT,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS survey_drafts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      answers_json TEXT NOT NULL DEFAULT '{}',
+      unclear_json TEXT NOT NULL DEFAULT '[]',
+      step INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS survey_draft_unique
+      ON survey_drafts(survey_id, user_id);
   `);
 }
 

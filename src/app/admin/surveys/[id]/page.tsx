@@ -90,15 +90,15 @@ export default async function AdminSurveyDetailPage({
               {survey.type} · {responses.length}/{roster.length} players submitted ·{" "}
               {survey.active ? "active" : "closed"}
             </p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Questions in code:{" "}
-              <code className="text-[var(--venom)]">src/lib/role-assessment.ts</code>
+            <p className="mt-2 text-base text-[var(--text-muted)]">
+              Admin-only results. This survey stays <strong>active for every player</strong> until
+              you close it below. Navigating away does not close it.
             </p>
           </div>
           {survey.active && (
             <form action={deactivateSurveyAction}>
               <input type="hidden" name="surveyId" value={survey.id} />
-              <button type="submit" className="btn btn-ghost">
+              <button type="submit" className="btn btn-danger">
                 Close survey
               </button>
             </form>
