@@ -56,11 +56,17 @@ Reset DB + re-seed:
 npm run db:reset
 ```
 
-## Phase 2 — deploy on X260 (Tailscale)
+## Phase 2 — deploy on X260 (Cloudflare Tunnel)
 
-**Team URL (Tailscale):** [http://x260.tail07c06e.ts.net:3040](http://x260.tail07c06e.ts.net:3040)  
-Also: `http://100.95.212.44:3040`  
-Players need Tailscale joined to your tailnet (same as accessing other X260 services).
+**Do not use Tailscale for player access.** Expose via Cloudflare Tunnel ($0).
+
+Live URL is written on the server to `deploy/PUBLIC_URL.txt` (quick tunnels change on tunnel restart).
+
+```bash
+ssh hamza@100.95.212.44 cat ~/pubg-Genei-ryodan-manager/deploy/PUBLIC_URL.txt
+```
+
+See [deploy/CLOUDFLARE.md](deploy/CLOUDFLARE.md) for named-tunnel (stable hostname) setup.
 
 Workflow:
 
@@ -70,18 +76,13 @@ Workflow:
 ```bash
 cd ~/pubg-Genei-ryodan-manager
 git pull --ff-only
-npm install
-npm run build
-sudo systemctl restart genei-ryodan
+export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh"
+npm ci && npm run build
+systemctl --user restart genei-ryodan
+# only restart tunnel if needed — then update APP_ORIGIN + PUBLIC_URL.txt
 ```
 
-First-time setup (already done if you used the agent deploy):
-
-- Node.js 22+, build tools for `better-sqlite3`
-- `credentials.local.txt` + `.env` on the server (never committed)
-- systemd unit: `deploy/genei-ryodan.service` → `/etc/systemd/system/genei-ryodan.service`
-
-Magic links use `APP_ORIGIN` from `.env` so generated URLs point at the Tailscale host.
+Services: `genei-ryodan` + `genei-cloudflared` (user systemd).
 
 Do **not** commit real passwords. No CI / deploy keys unless requested.
 
