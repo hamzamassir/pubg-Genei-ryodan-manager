@@ -1,0 +1,18 @@
+[Unit]
+Description=GENEI RYODAN / GENEx Manager
+After=network.target
+
+[Service]
+Type=simple
+User=hamza
+WorkingDirectory=/home/hamza/pubg-Genei-ryodan-manager
+EnvironmentFile=/home/hamza/pubg-Genei-ryodan-manager/.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+# Native module path for better-sqlite3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

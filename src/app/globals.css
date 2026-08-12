@@ -1,0 +1,315 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #050506;
+  --bg-elevated: #0c0c0f;
+  --bg-panel: #101014;
+  --border: #2a1f33;
+  --border-bright: #5b2d7a;
+  --venom: #a855f7;
+  --venom-dim: #7c3aed;
+  --venom-glow: rgba(168, 85, 247, 0.35);
+  --acid: #39ff14;
+  --acid-dim: #22c55e;
+  --text: #f4f0f8;
+  --text-muted: #b5a8c4;
+  --danger: #ff3b5c;
+  --warn: #f5a524;
+  --touch: 48px;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-venom: var(--venom);
+  --color-acid: var(--acid);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-hud);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  font-size: 17px;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (min-width: 640px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 58, 237, 0.18), transparent),
+    radial-gradient(ellipse 40% 30% at 100% 100%, rgba(57, 255, 20, 0.04), transparent),
+    linear-gradient(180deg, #070708 0%, #050506 100%);
+  color: var(--text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background: var(--venom);
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-font {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+.hud-font {
+  font-family: var(--font-hud), ui-monospace, monospace;
+}
+
+.hud-grid {
+  background-image:
+    linear-gradient(rgba(168, 85, 247, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.panel {
+  background: linear-gradient(160deg, rgba(20, 16, 28, 0.95), rgba(10, 10, 14, 0.98));
+  border: 1px solid var(--border);
+}
+
+@media (min-width: 640px) {
+  .panel {
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+}
+
+.panel-sharp {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: var(--touch);
+  padding: 0.75rem 1.15rem;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border-bright);
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.28), rgba(88, 28, 135, 0.4));
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:hover {
+  border-color: var(--venom);
+  box-shadow: 0 0 20px var(--venom-glow);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+}
+
+.btn-acid {
+  border-color: rgba(57, 255, 20, 0.45);
+  background: linear-gradient(180deg, rgba(57, 255, 20, 0.12), rgba(34, 197, 94, 0.08));
+}
+
+.btn-danger {
+  border-color: rgba(255, 59, 92, 0.55);
+  background: linear-gradient(180deg, rgba(255, 59, 92, 0.2), rgba(127, 29, 29, 0.35));
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: var(--touch);
+  padding: 0.8rem 0.95rem;
+  background: #0a0a0c;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+  border-radius: 0;
+}
+
+.textarea {
+  min-height: 6rem;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--venom);
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.35);
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  color: var(--venom);
+}
+
+.badge-acid {
+  color: var(--acid);
+  border-color: rgba(57, 255, 20, 0.35);
+}
+
+.badge-off {
+  color: var(--danger);
+  border-color: rgba(255, 59, 92, 0.35);
+}
+
+.scanlines::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 3px
+  );
+  opacity: 0.2;
+  z-index: 50;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.glow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--acid);
+  box-shadow: 0 0 10px var(--acid);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: slide-up 0.45s ease both;
+}
+
+.page-title {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .page-title {
+    font-size: 1.85rem;
+  }
+}
+
+.section-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--venom);
+}
+
+.mobile-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  background: rgba(5, 5, 6, 0.94);
+  backdrop-filter: blur(12px);
+  padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 640px) {
+  .mobile-nav {
+    display: none;
+  }
+}
+
+.mobile-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.mobile-nav a:active,
+.mobile-nav a:hover {
+  color: var(--venom);
+}
+
+.mobile-nav a.nav-active {
+  color: var(--venom);
+  background: rgba(168, 85, 247, 0.12);
+  box-shadow: inset 0 2px 0 var(--venom);
+}
