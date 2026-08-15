@@ -93,7 +93,10 @@ export default async function AdminSurveyDetailPage({
             </p>
             <p className="mt-2 text-base text-[var(--text-muted)]">
               Admin-only results. This survey stays <strong>active for every player</strong> until
-              you close it below. Navigating away does not close it.
+              you close it below. Navigating away does not close it.{" "}
+              <Link href="/admin/surveys/guide" className="font-semibold text-[var(--acid)]">
+                Question guide →
+              </Link>
             </p>
           </div>
           {survey.active && <ConfirmCloseSurvey surveyId={survey.id} />}

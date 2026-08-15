@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ROLE_QUESTIONS,
   type RoleQuestion,
@@ -18,7 +19,26 @@ function formatValue(q: RoleQuestion, raw: unknown): string {
     const n = Number(raw);
     if (Number.isFinite(n) && SCALE_LABELS[n]) return `${n} — ${SCALE_LABELS[n]}`;
   }
+  if (q.kind === "choice") {
+    const key = String(raw);
+    const opt = q.options.find((o) => o.key === key);
+    if (opt) return `${opt.key} — ${opt.label}`;
+    return key;
+  }
   return String(raw);
+}
+
+function choiceLegend(q: RoleQuestion) {
+  if (q.kind !== "choice") return null;
+  return (
+    <ul className="mt-2 space-y-1 text-sm text-[var(--text-muted)]">
+      {q.options.map((opt) => (
+        <li key={opt.key}>
+          <span className="font-bold text-[var(--venom)]">{opt.key}.</span> {opt.label}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 /** Admin-only: every question + this player's answer, grouped by section. */
@@ -53,7 +73,12 @@ export function PlayerAnswerReview({
         All answers · {playerLabel} ({answered}/{ROLE_QUESTIONS.length})
       </summary>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        Full questionnaire for judging — scores above are computed from these.
+        Choice answers show as{" "}
+        <strong className="text-[var(--text)]">A — full text</strong>. Need the whole bank?{" "}
+        <Link href="/admin/surveys/guide" className="font-semibold text-[var(--acid)] underline">
+          Open question guide
+        </Link>
+        .
       </p>
       <div className="mt-4 space-y-5">
         {[...bySection.entries()].map(([section, qs]) => (
@@ -71,7 +96,12 @@ export function PlayerAnswerReview({
                     className="border-b border-[var(--border)] pb-3 last:border-0"
                   >
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-sm font-bold text-[var(--venom)]">{q.id}</span>
+                      <Link
+                        href={`/admin/surveys/guide#${q.id}`}
+                        className="text-sm font-bold text-[var(--venom)] underline-offset-2 hover:underline"
+                      >
+                        {q.id}
+                      </Link>
                       {flagged && (
                         <span className="badge badge-off text-xs">unclear</span>
                       )}
@@ -89,6 +119,7 @@ export function PlayerAnswerReview({
                         ? "Skipped (flagged unclear)"
                         : value}
                     </p>
+                    {choiceLegend(q)}
                   </li>
                 );
               })}

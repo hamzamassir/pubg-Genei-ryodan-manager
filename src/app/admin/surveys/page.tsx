@@ -28,9 +28,12 @@ export default async function AdminSurveysPage({
       <div className="animate-in space-y-6">
         <div>
           <h1 className="page-title">Surveys</h1>
-          <p className="mt-1 text-base text-[var(--text-muted)]">
+          <p className="text-base text-[var(--text-muted)]">
             Launch the weekly role assessment (shows on player home until filled). Peer ratings stay
-            anonymous. Open a survey for a clear results dashboard.
+            anonymous. Open a survey for a clear results dashboard.{" "}
+            <Link href="/admin/surveys/guide" className="font-semibold text-[var(--acid)]">
+              Question guide (A/B/C/D)
+            </Link>
           </p>
           {sp.created && (
             <p className="mt-2 text-base text-[var(--acid)]">Survey #{sp.created} launched.</p>

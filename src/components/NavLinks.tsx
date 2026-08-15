@@ -7,6 +7,9 @@ export type NavItem = { href: string; label: string };
 
 function isActive(href: string, pathname: string) {
   if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin/surveys") {
+    return pathname === "/admin/surveys" || /^\/admin\/surveys\/\d+/.test(pathname);
+  }
   if (pathname === href) return true;
   return pathname.startsWith(`${href}/`);
 }

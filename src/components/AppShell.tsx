@@ -13,6 +13,7 @@ const links = [
   { href: "/admin/match-days", label: "Matches", roles: ["admin"] },
   { href: "/admin/users", label: "Users", roles: ["admin"] },
   { href: "/admin/surveys", label: "Surveys", roles: ["admin"] },
+  { href: "/admin/surveys/guide", label: "Q Guide", roles: ["admin"] },
 ];
 
 export function AppShell({
@@ -78,9 +79,13 @@ export function AppShell({
         items={
           user.role === "admin"
             ? nav.filter((l) =>
-                ["/admin", "/admin/match-days", "/admin/users", "/admin/surveys", "/roster"].includes(
-                  l.href,
-                ),
+                [
+                  "/admin",
+                  "/admin/match-days",
+                  "/admin/surveys",
+                  "/admin/surveys/guide",
+                  "/admin/users",
+                ].includes(l.href),
               )
             : nav.slice(0, 4)
         }
