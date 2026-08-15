@@ -13,6 +13,7 @@ import {
   type RoleCode,
 } from "@/lib/role-assessment";
 import { ConfirmCloseSurvey } from "@/components/ConfirmCloseSurvey";
+import { PlayerAnswerReview } from "@/components/PlayerAnswerReview";
 
 type ScoresPayload = {
   raw: Record<RoleCode, number>;
@@ -235,23 +236,11 @@ export default async function AdminSurveyDetailPage({
                         </div>
                       )}
                       {answers && (
-                        <details className="text-sm text-[var(--text-muted)]">
-                          <summary className="cursor-pointer font-semibold text-[var(--text)]">
-                            Profile answers (Q1–Q10)
-                          </summary>
-                          <ul className="mt-2 space-y-1">
-                            {["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10"].map(
-                              (qid) => (
-                                <li key={qid}>
-                                  <span className="text-[var(--venom)]">{qid}:</span>{" "}
-                                  {Array.isArray(answers[qid])
-                                    ? (answers[qid] as string[]).join(", ")
-                                    : String(answers[qid] ?? "—")}
-                                </li>
-                              ),
-                            )}
-                          </ul>
-                        </details>
+                        <PlayerAnswerReview
+                          answers={answers}
+                          unclearQuestionIds={userFlags.map((f) => f.questionId)}
+                          playerLabel={u.ingameName || u.displayName}
+                        />
                       )}
                     </div>
                   ) : (
